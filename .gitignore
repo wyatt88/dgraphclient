@@ -1,0 +1,6 @@
+# Created by .ignore support plugin (hsz.mobi)
+# Ignore IDE
+.idea/
+
+# Ignore Go Mod
+go.sum
