@@ -23,6 +23,18 @@ type Client struct {
 	Port int
 }
 
+func (c Client)Setup(schema string) error {
+	return c.setup(schema)
+}
+func (c Client)setup(schema string) error {
+	client := c.newClient()
+	// Install a schema into dgraph. Accounts have a `name` and a `balance`.
+	err := client.Alter(context.Background(), &api.Operation{
+		Schema: schema,
+	})
+	return err
+}
+
 func (c Client)newClient() *dgo.Dgraph {
 	// Dial a gRPC connection. The address to dial to can be configured when
 	// setting up the dgraph cluster.
