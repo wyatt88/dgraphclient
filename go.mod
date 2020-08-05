@@ -1,4 +1,4 @@
-module dgraphclient
+module github.com/wyatt88/dgraphclient
 
 go 1.14
 
