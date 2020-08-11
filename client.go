@@ -42,7 +42,6 @@ func (c Client) newClient() *dgo.Dgraph {
 		grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)))
 	dgraphUrl := fmt.Sprintf("%s:%d", c.Hostname, c.Port)
 	d, err := grpc.Dial(dgraphUrl, dialOpts...)
-	defer d.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
