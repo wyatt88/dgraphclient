@@ -69,6 +69,16 @@ func (c Client)Insert(object interface{}) (map[string]string,error) {
 	return assigned.Uids,err
 }
 
+func (c Client)Query(q string) (*api.Response,error) {
+	client := c.newClient()
+	txn := client.NewTxn()
+	resp, err := txn.Query(context.Background(), q)
+	if err != nil {
+		return nil, err
+	}
+	return resp,nil
+}
+
 func (c Client)DropAll()  {
 	client := c.newClient()
 	ctx, toCancel := context.WithTimeout(context.Background(), 30*time.Second)
