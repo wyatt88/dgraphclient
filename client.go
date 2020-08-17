@@ -68,6 +68,26 @@ func (c Client) Insert(object interface{}) (map[string]string, error) {
 	return assigned.Uids, err
 }
 
+func (c Client) DeleteByUid(uid string) error {
+	return c.deleteByUid(uid)
+}
+
+func (c Client) deleteByUid(uid string) error {
+	client := c.newClient()
+	ctx := context.Background()
+	d := map[string]string{"uid": uid}
+	pb, err := json.Marshal(d)
+	mu := &api.Mutation{
+		CommitNow: true,
+		DeleteJson: pb,
+	}
+	_,err = client.NewTxn().Mutate(ctx, mu)
+	if err != nil{
+		return err
+	}
+	return nil
+}
+
 func (c Client) Query(q string) (*api.Response, error) {
 	return c.query(q)
 }
@@ -143,13 +163,14 @@ func (c Client) DropAll() {
 }
 
 func (c Client)Link(relation string,obj1 string,obj2 string)  {
+	client := c.newClient()
 	ctx := context.Background()
 	mu := &api.Mutation{
 		CommitNow: true,
 	}
 	t :=fmt.Sprintf("<%s> <%s> <%s> .",obj1,relation,obj2)
 	mu.SetNquads = []byte(t)
-	_,err := c.NewTxn().Mutate(ctx,mu)
+	_,err := client.NewTxn().Mutate(ctx,mu)
 	if err != nil{
 		log.Println(err)
 	}
