@@ -141,3 +141,16 @@ func (c Client) DropAll() {
 		log.Fatal("The drop all operation should have succeeded")
 	}
 }
+
+func (c Client)Link(relation string,obj1 string,obj2 string)  {
+	ctx := context.Background()
+	mu := &api.Mutation{
+		CommitNow: true,
+	}
+	t :=fmt.Sprintf("<%s> <%s> <%s> .",obj1,relation,obj2)
+	mu.SetNquads = []byte(t)
+	_,err := c.NewTxn().Mutate(ctx,mu)
+	if err != nil{
+		log.Println(err)
+	}
+}
