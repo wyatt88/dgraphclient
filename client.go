@@ -14,33 +14,23 @@ import (
 	"log"
 )
 
-type DgraphClient interface {
-	newClient()
-}
-
 type Client struct {
-	Hostname string
-	Port     int
+	dgraphClient *dgo.Dgraph
 }
 
-func (c Client) Setup(schema string) error {
-	return c.setup(schema)
-}
-func (c Client) setup(schema string) error {
-	client := c.newClient()
-	err := client.Alter(context.Background(), &api.Operation{
-		Schema: schema,
-	})
-	return err
+func New(hostname string,port int) Client {
+	return Client{
+		dgraphClient: newClient(hostname,port),
+	}
 }
 
-func (c Client) newClient() *dgo.Dgraph {
+func newClient(hostname string, port int) *dgo.Dgraph {
 	// Dial a gRPC connection. The address to dial to can be configured when
 	// setting up the dgraph cluster.
 	dialOpts := append([]grpc.DialOption{},
 		grpc.WithInsecure(),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)))
-	dgraphUrl := fmt.Sprintf("%s:%d", c.Hostname, c.Port)
+	dgraphUrl := fmt.Sprintf("%s:%d", hostname, port)
 	d, err := grpc.Dial(dgraphUrl, dialOpts...)
 	if err != nil {
 		log.Fatal(err)
@@ -50,8 +40,19 @@ func (c Client) newClient() *dgo.Dgraph {
 	)
 }
 
+func (c Client) Setup(schema string) error {
+	return c.setup(schema)
+}
+func (c Client) setup(schema string) error {
+	client := c.dgraphClient
+	err := client.Alter(context.Background(), &api.Operation{
+		Schema: schema,
+	})
+	return err
+}
+
 func (c Client) Insert(object interface{}) (map[string]string, error) {
-	client := c.newClient()
+	client := c.dgraphClient
 	ctx := context.Background()
 	mu := &api.Mutation{
 		CommitNow: true,
@@ -73,7 +74,7 @@ func (c Client) DeleteByUid(uid string) error {
 }
 
 func (c Client) deleteByUid(uid string) error {
-	client := c.newClient()
+	client := c.dgraphClient
 	ctx := context.Background()
 	d := map[string]string{"uid": uid}
 	pb, err := json.Marshal(d)
@@ -93,7 +94,7 @@ func (c Client) Query(q string) (*api.Response, error) {
 }
 
 func (c Client) query(q string) (*api.Response, error) {
-	client := c.newClient()
+	client := c.dgraphClient
 	txn := client.NewTxn()
 	resp, err := txn.Query(context.Background(), q)
 	if err != nil {
@@ -136,7 +137,7 @@ func (c Client)Update(object interface{}) (bool,error) {
 }
 
 func (c Client)update(object interface{}) (bool,error)  {
-	client := c.newClient()
+	client := c.dgraphClient
 	ctx := context.Background()
 	mu := &api.Mutation{
 		CommitNow: true,
@@ -154,7 +155,7 @@ func (c Client)update(object interface{}) (bool,error)  {
 }
 
 func (c Client) DropAll() {
-	client := c.newClient()
+	client := c.dgraphClient
 	ctx, toCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer toCancel()
 	if err := client.Alter(ctx, &api.Operation{DropAll: true}); err != nil {
@@ -163,7 +164,7 @@ func (c Client) DropAll() {
 }
 
 func (c Client)Link(relation string,obj1 string,obj2 string)  {
-	client := c.newClient()
+	client := c.dgraphClient
 	ctx := context.Background()
 	mu := &api.Mutation{
 		CommitNow: true,
